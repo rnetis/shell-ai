@@ -61,7 +61,7 @@ function Clock({ className }: { className?: string }) {
 function TodayLine() {
   const now = useNow();
   const date = now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
-  return <p className="font-display text-4xl text-paper-fg text-balance">{date}</p>;
+  return <p className="text-3xl font-semibold text-paper-fg text-balance">{date}</p>;
 }
 
 function AppSurface({ id }: { id: string }) {
@@ -132,17 +132,17 @@ function Desktop() {
   return (
     <div className="relative h-full">
       <header className="absolute inset-x-0 top-0 z-30 flex h-12 items-center gap-2 border-b border-line bg-dock px-2 backdrop-blur-xl">
-        <span className="px-2 font-display text-xl italic">Shell</span>
+        <span className="px-2 font-semibold text-xl">Shell</span>
         <span className="truncate text-sm text-muted">{title}</span>
         <div className="ml-auto flex items-center">
           <SearchButton />
-          <button type="button" className="h-11 px-3 text-sm text-fg" aria-pressed={arrange} onClick={() => setArrange(!arrange)}>
+          <button type="button" className="h-11 px-3 text-sm text-fg font-medium" aria-pressed={arrange} onClick={() => setArrange(!arrange)}>
             {arrange ? "Done" : "Arrange"}
           </button>
           <button type="button" className={iconBtnClass} aria-label="Open apps" onClick={() => setSwitcher(true)}>
             <AppWindow className="size-5" />
           </button>
-          <Clock className="px-3 text-sm tabular-nums" />
+          <Clock className="px-3 text-sm font-medium tabular-nums" />
         </div>
       </header>
       <div className="absolute inset-x-0 top-12 bottom-24 overflow-hidden px-3 py-4">
@@ -228,7 +228,7 @@ function Window({ win }: { win: Win }) {
 
   return (
     <section
-      className="absolute flex flex-col overflow-hidden rounded-shell border border-line bg-surface shadow-window"
+      className="absolute flex flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-window"
       style={frame}
       onPointerDown={() => focusApp(win.appId)}
     >
@@ -243,9 +243,9 @@ function Window({ win }: { win: Win }) {
         <button type="button" className={iconBtnClass} aria-label={`Minimize ${meta.name}`} onClick={() => toggleMin(win.appId)}>
           <Minus className="size-4" />
         </button>
-        <h2 className="min-w-0 flex-1 truncate text-center font-display text-lg">{meta.name}</h2>
+        <h2 className="min-w-0 flex-1 truncate text-center font-medium text-[15px]">{meta.name}</h2>
         {win.appId.startsWith("mini_") ? (
-          <button type="button" className="h-11 px-3 text-sm text-brass" onClick={() => editMini(win.appId)}>
+          <button type="button" className="h-11 px-3 text-sm font-medium text-accent" onClick={() => editMini(win.appId)}>
             Edit
           </button>
         ) : (
@@ -284,10 +284,10 @@ function PhoneHome() {
 
   return (
     <div className="relative flex h-full flex-col pt-[env(safe-area-inset-top)]">
-      <header className="flex h-12 items-center justify-between px-2 text-paper-fg">
+      <header className="flex h-12 items-center justify-between px-2 text-paper-fg font-medium">
         <Clock className="px-2 text-sm tabular-nums" />
         <div className="flex items-center">
-          <button type="button" className="h-11 px-3 text-sm" aria-pressed={arrange} onClick={() => setArrange(!arrange)}>
+          <button type="button" className="h-11 px-3 text-sm font-medium" aria-pressed={arrange} onClick={() => setArrange(!arrange)}>
             {arrange ? "Done" : "Arrange"}
           </button>
           <SearchButton />
@@ -321,16 +321,18 @@ function PhoneApp({ id }: { id: string }) {
   const meta = describeApp(id, minis);
   return (
     <section className="absolute inset-0 z-20 flex flex-col bg-surface pt-[env(safe-area-inset-top)]">
-      <header className="flex h-12 shrink-0 items-center px-1">
+      <header className="flex h-12 shrink-0 items-center px-1 border-b border-line">
         <button type="button" className={iconBtnClass} aria-label="Home" onClick={() => setPhoneApp(null)}>
           <House className="size-5" />
         </button>
-        <h1 className="min-w-0 flex-1 truncate text-center font-display text-xl">{meta.name}</h1>
+        <h1 className="min-w-0 flex-1 truncate text-center font-medium text-lg">{meta.name}</h1>
         {id.startsWith("mini_") ? (
-          <button type="button" className="h-11 px-2 text-sm text-brass" onClick={() => editMini(id)}>
+          <button type="button" className="h-11 px-2 text-sm font-medium text-accent" onClick={() => editMini(id)}>
             Edit
           </button>
-        ) : null}
+        ) : (
+          <span className="w-11" />
+        )}
         <button type="button" className={iconBtnClass} aria-label="Open apps" onClick={() => setSwitcher(true)}>
           <AppWindow className="size-5" />
         </button>
@@ -365,7 +367,7 @@ function Spotlight() {
   return (
     <div className="absolute inset-0 z-50 bg-bg/50 p-4" onClick={() => setSpotlight(false)}>
       <div
-        className="mx-auto mt-16 w-full max-w-lg overflow-hidden rounded-shell border border-line bg-surface shadow-window sm:mt-24"
+        className="mx-auto mt-16 w-full max-w-lg overflow-hidden rounded-2xl border border-line bg-surface shadow-window sm:mt-24"
         onClick={(event) => event.stopPropagation()}
       >
         <input
@@ -420,11 +422,11 @@ function Switcher() {
   return (
     <div className="absolute inset-0 z-40 flex items-end justify-center bg-bg/55 p-4 sm:items-center" onClick={() => setSwitcher(false)}>
       <div
-        className="w-full max-w-3xl rounded-shell border border-line bg-surface p-4 shadow-window"
+        className="w-full max-w-3xl rounded-3xl border border-line bg-surface p-5 shadow-window"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-2xl">Open</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-2xl font-semibold">Open</h2>
           <button type="button" className={quietClass} onClick={() => setSwitcher(false)}>
             Close
           </button>
@@ -434,7 +436,7 @@ function Switcher() {
         ) : (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {windows.map((win) => (
-              <li key={win.id} className="rounded-shell border border-line bg-surface-2 p-3">
+              <li key={win.id} className="rounded-2xl border border-line bg-surface-2 p-3">
                 <button type="button" className="w-full text-left" onClick={() => focusApp(win.appId)}>
                   <span className="block truncate font-medium">{describeApp(win.appId, minis).name}</span>
                   <span className="text-xs text-muted">{win.minimized ? "Hidden" : "Open"}</span>
@@ -476,14 +478,14 @@ function Confirm() {
   if (!dialog) return null;
   return (
     <div className="absolute inset-0 z-50 grid place-items-center bg-bg/55 p-4">
-      <div className="w-full max-w-sm rounded-shell border border-line bg-surface p-5 shadow-window" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-body">
-        <h2 id="confirm-title" className="font-display text-3xl">
+      <div className="w-full max-w-sm rounded-3xl border border-line bg-surface p-6 shadow-window" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-body">
+        <h2 id="confirm-title" className="text-2xl font-semibold">
           {dialog.title}
         </h2>
-        <p id="confirm-body" className="mt-2 text-sm text-pretty text-muted">
+        <p id="confirm-body" className="mt-3 text-sm text-pretty text-muted">
           {dialog.body}
         </p>
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="mt-6 flex justify-end gap-2">
           <button type="button" className={quietClass} autoFocus onClick={() => settleConfirm(false)}>
             Cancel
           </button>

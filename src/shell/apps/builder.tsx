@@ -58,7 +58,7 @@ function Lobby({
   return (
     <div className="h-full overflow-auto bg-surface p-4 text-fg sm:p-6">
       <p className="text-xs uppercase tracking-widest text-muted">Builder</p>
-      <h2 className="mt-2 max-w-md font-display text-4xl text-balance">What should we build?</h2>
+      <h2 className="mt-2 max-w-md text-3xl font-semibold text-balance">What should we build?</h2>
       <form
         className="mt-5 flex flex-col gap-2 sm:flex-row"
         onSubmit={(event) => {
@@ -338,7 +338,7 @@ function Studio({
           value={draft.name}
           onChange={(event) => setDraft({ ...draft, name: event.target.value.slice(0, 28) })}
           aria-label="App name"
-          className="h-11 min-w-0 flex-1 bg-transparent font-display text-2xl outline-none"
+          className="h-11 min-w-0 flex-1 bg-transparent text-2xl font-semibold outline-none"
         />
         <div className="flex rounded-xl bg-surface-2 p-1">
           {(["ask", "edit", "auto"] as const).map((item) => (
@@ -347,7 +347,7 @@ function Studio({
               type="button"
               aria-pressed={mode === item}
               onClick={() => setMode(item)}
-              className={`h-9 rounded-lg px-3 text-sm capitalize ${mode === item ? "bg-brass text-brass-ink" : "text-fg"}`}
+              className={`h-9 rounded-lg px-3 text-sm capitalize ${mode === item ? "bg-accent text-accent-fg" : "text-fg"}`}
             >
               {item}
             </button>
@@ -384,7 +384,7 @@ function Studio({
                 type="button"
                 aria-pressed={tab === id}
                 onClick={() => setTab(id)}
-                className={`h-11 flex-1 rounded-xl text-sm ${tab === id ? "bg-brass text-brass-ink" : "text-fg"}`}
+                className={`h-11 flex-1 rounded-xl text-sm ${tab === id ? "bg-accent text-accent-fg" : "text-fg"}`}
               >
                 {label}
               </button>

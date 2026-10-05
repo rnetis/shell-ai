@@ -22,12 +22,12 @@ export const ICONS: Record<IconKey, LucideIcon> = {
   mini: AppWindow,
 };
 
-const SYSTEM: Record<string, { name: string; icon: IconKey; tile: "brass" | "surface" }> = {
-  builder: { name: "Builder", icon: "builder", tile: "brass" },
+const SYSTEM: Record<string, { name: string; icon: IconKey; tile: "accent" | "surface" }> = {
+  builder: { name: "Builder", icon: "builder", tile: "accent" },
   notes: { name: "Notes", icon: "notes", tile: "surface" },
-  tasks: { name: "Tasks", icon: "tasks", tile: "brass" },
+  tasks: { name: "Tasks", icon: "tasks", tile: "accent" },
   calc: { name: "Calc", icon: "calc", tile: "surface" },
-  clock: { name: "Clock", icon: "clock", tile: "brass" },
+  clock: { name: "Clock", icon: "clock", tile: "accent" },
   files: { name: "Files", icon: "files", tile: "surface" },
   settings: { name: "Settings", icon: "settings", tile: "surface" },
 };
@@ -35,10 +35,10 @@ const SYSTEM: Record<string, { name: string; icon: IconKey; tile: "brass" | "sur
 export function describeApp(id: string, minis: Record<string, MiniApp>) {
   const known = SYSTEM[id];
   if (known) return known;
-  const brass = id.charCodeAt(id.length - 1) % 2 === 0;
+  const accent = id.charCodeAt(id.length - 1) % 2 === 0;
   return {
     name: minis[id]?.name ?? "App",
     icon: "mini" as const,
-    tile: brass ? ("brass" as const) : ("surface" as const),
+    tile: accent ? ("accent" as const) : ("surface" as const),
   };
 }
