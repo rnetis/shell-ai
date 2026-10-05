@@ -1,58 +1,58 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #14120f;
-  --fg: #f3ece2;
-  --muted: #a3988a;
-  --surface: #221f1a;
-  --surface-2: #2c2822;
-  --brass: #d39a45;
-  --brass-ink: #1a140c;
-  --line: rgba(243, 236, 226, 0.14);
-  --dock: rgba(20, 18, 15, 0.72);
-  --paper-fg: #f6f1e7;
-  --paper-muted: rgba(246, 241, 231, 0.72);
-  --shadow: 0 24px 60px rgba(0, 0, 0, 0.38);
+  --bg: #000000;
+  --fg: #ffffff;
+  --muted: #a1a1aa;
+  --surface: #1c1c1e;
+  --surface-2: #2c2c2e;
+  --accent: #0a84ff;
+  --accent-fg: #ffffff;
+  --line: rgba(255, 255, 255, 0.15);
+  --dock: rgba(28, 28, 30, 0.75);
+  --paper-fg: #ffffff;
+  --paper-muted: rgba(255, 255, 255, 0.7);
+  --shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
   color-scheme: dark;
 }
 
 html[data-theme="light"],
 [data-theme="light"] {
-  --bg: #efe6d6;
-  --fg: #1c1814;
-  --muted: #6f675c;
-  --surface: #f7f1e6;
-  --surface-2: #fffaf3;
-  --brass: #a86b2a;
-  --brass-ink: #fff8ee;
-  --line: rgba(28, 24, 20, 0.12);
-  --dock: rgba(255, 250, 243, 0.78);
-  --shadow: 0 18px 50px rgba(70, 48, 20, 0.16);
+  --bg: #f2f2f7;
+  --fg: #000000;
+  --muted: #8e8e93;
+  --surface: #ffffff;
+  --surface-2: #f2f2f7;
+  --accent: #007aff;
+  --accent-fg: #ffffff;
+  --line: rgba(0, 0, 0, 0.1);
+  --dock: rgba(255, 255, 255, 0.75);
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.1);
   color-scheme: light;
 }
 
 [data-paper="harbor"],
 [data-paper="orchard"] {
-  --paper-fg: #f6f1e7;
-  --paper-muted: rgba(246, 241, 231, 0.74);
+  --paper-fg: #ffffff;
+  --paper-muted: rgba(255, 255, 255, 0.7);
 }
 
 [data-paper="paper"],
 [data-paper="salt"] {
-  --paper-fg: #1c1814;
-  --paper-muted: rgba(28, 24, 20, 0.64);
+  --paper-fg: #000000;
+  --paper-muted: rgba(0, 0, 0, 0.6);
 }
 
 @theme inline {
-  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Fraunces", "Iowan Old Style", Palatino, Georgia, serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --color-bg: var(--bg);
   --color-fg: var(--fg);
   --color-muted: var(--muted);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
-  --color-brass: var(--brass);
-  --color-brass-ink: var(--brass-ink);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
   --color-line: var(--line);
   --color-dock: var(--dock);
   --color-paper-fg: var(--paper-fg);
@@ -83,15 +83,15 @@ html[data-theme="light"],
   }
 
   html[data-theme="light"] body {
-    background: #efe6d6;
+    background: #f2f2f7;
   }
 
   ::selection {
-    background: color-mix(in srgb, var(--brass) 45%, transparent);
+    background: color-mix(in srgb, var(--accent) 45%, transparent);
   }
 
   :focus-visible {
-    outline: 2px solid var(--brass);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
 }
@@ -115,50 +115,19 @@ html[data-theme="light"],
 }
 
 .wallpaper[data-paper="harbor"] {
-  background:
-    radial-gradient(42% 28% at 74% 64%, rgba(228, 181, 106, 0.95), rgba(228, 181, 106, 0) 68%),
-    radial-gradient(90% 55% at 70% 108%, rgba(211, 154, 69, 0.38), transparent 60%),
-    linear-gradient(180deg, #1c1915 0%, #14120f 46%, #2a2118 100%);
-}
-
-.wallpaper[data-paper="harbor"]::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 66%;
-  height: 1px;
-  background: rgba(243, 236, 226, 0.35);
-  box-shadow: 0 18px 40px rgba(211, 154, 69, 0.25);
+  background: linear-gradient(180deg, #1c1c1e 0%, #000000 100%);
 }
 
 .wallpaper[data-paper="orchard"] {
-  background:
-    radial-gradient(18% 10% at 22% 72%, rgba(211, 154, 69, 0.9), transparent 70%),
-    radial-gradient(12% 8% at 38% 78%, rgba(211, 154, 69, 0.55), transparent 70%),
-    radial-gradient(14% 8% at 62% 74%, rgba(228, 181, 106, 0.7), transparent 70%),
-    radial-gradient(120% 50% at 50% 120%, #3a2a18, transparent 55%),
-    linear-gradient(180deg, #16130f 0%, #1a1612 58%, #241c14 100%);
+  background: linear-gradient(180deg, #2c2c2e 0%, #1c1c1e 100%);
 }
 
 .wallpaper[data-paper="paper"] {
-  background:
-    radial-gradient(50% 40% at 0% 0%, rgba(211, 154, 69, 0.28), transparent 60%),
-    linear-gradient(180deg, #f7f1e6 0%, #efe6d6 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #f2f2f7 100%);
 }
 
 .wallpaper[data-paper="salt"] {
-  background:
-    linear-gradient(180deg, #f4efe6 0%, #e7e0d4 58%, #d9cbb6 58.2%, #efe6d6 100%);
-}
-
-.paper-grain {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.22;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='.55'/></svg>");
+  background: linear-gradient(180deg, #f2f2f7 0%, #e5e5ea 100%);
 }
 
 .no-scrollbar {

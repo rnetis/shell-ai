@@ -6,7 +6,7 @@ export function BootMark() {
   return (
     <main className="grid h-dvh place-items-center bg-bg text-fg">
       <div className="text-center">
-        <p className="font-display text-5xl italic tracking-tight">Shell</p>
+        <p className="text-5xl font-semibold tracking-tight">Shell</p>
         <p className="mt-2 text-sm text-muted">Talk to build. Tap to run.</p>
       </div>
     </main>
@@ -40,7 +40,7 @@ export function LaunchIcon({
   const meta = describeApp(id, minis);
   const Icon = ICONS[meta.icon];
   const tile =
-    meta.tile === "brass" ? "bg-brass text-brass-ink" : "bg-surface text-fg ring-1 ring-line";
+    meta.tile === "accent" ? "bg-accent text-accent-fg" : "bg-surface text-fg border border-line";
 
   return (
     <div className={`flex flex-col items-center ${dock ? "w-12" : "w-20"}`}>
@@ -52,10 +52,10 @@ export function LaunchIcon({
           if (!arrange) openApp(id);
         }}
       >
-        <span className={`relative grid place-items-center rounded-icon shadow-sm ${dock ? "size-12" : "size-14"} ${tile}`}>
+        <span className={`relative grid place-items-center rounded-[1rem] shadow-sm ${dock ? "size-12" : "size-14"} ${tile}`}>
           <Icon className={dock ? "size-5" : "size-6"} strokeWidth={1.75} />
           {dock && running ? (
-            <span className="absolute -bottom-2 size-1 rounded-full bg-brass" />
+            <span className="absolute -bottom-2 size-1 rounded-full bg-accent" />
           ) : null}
         </span>
         {labeled ? (
@@ -90,7 +90,7 @@ export function Dock() {
   const dock = useShell((s) => s.dock);
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-      <div className="pointer-events-auto flex items-end gap-3 rounded-shell border border-line bg-dock px-3 py-2 shadow-window backdrop-blur-xl">
+      <div className="pointer-events-auto flex items-end gap-3 rounded-2xl border border-line bg-dock px-3 py-2 shadow-window backdrop-blur-xl">
         {dock.map((id) => (
           <LaunchIcon key={id} id={id} labeled={false} dock />
         ))}
@@ -103,15 +103,15 @@ export function Coach({ className = "" }: { className?: string }) {
   const dismiss = useShell((s) => s.dismissCoach);
   const openApp = useShell((s) => s.openApp);
   return (
-    <aside className={`max-w-sm rounded-shell border border-line bg-surface p-4 text-fg shadow-window ${className}`}>
-      <p className="font-display text-2xl">Make something small.</p>
-      <p className="mt-1 text-sm text-pretty text-muted">
+    <aside className={`max-w-sm rounded-3xl border border-line bg-surface p-5 text-fg shadow-window ${className}`}>
+      <p className="text-xl font-semibold">Make something small.</p>
+      <p className="mt-2 text-sm text-pretty text-muted">
         Open Builder, describe a tool, and pin it here. Reading week is already waiting.
       </p>
-      <div className="mt-3 flex gap-2">
+      <div className="mt-4 flex gap-2">
         <button
           type="button"
-          className="inline-flex h-11 items-center rounded-xl bg-brass px-4 text-sm font-medium text-brass-ink"
+          className="inline-flex h-10 items-center rounded-lg bg-accent px-4 text-sm font-medium text-accent-fg"
           onClick={() => {
             dismiss();
             openApp("builder");
@@ -119,7 +119,7 @@ export function Coach({ className = "" }: { className?: string }) {
         >
           Open Builder
         </button>
-        <button type="button" className="h-11 px-3 text-sm text-muted" onClick={dismiss}>
+        <button type="button" className="h-10 px-3 text-sm font-medium text-muted" onClick={dismiss}>
           Not now
         </button>
       </div>

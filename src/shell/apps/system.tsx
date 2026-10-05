@@ -41,7 +41,7 @@ export function NotesApp() {
           onChange={(event) => updateNote(note.id, { title: event.target.value })}
           placeholder="Title"
           aria-label="Title"
-          className="w-full bg-transparent px-4 font-display text-4xl text-fg outline-none placeholder:text-muted"
+          className="w-full bg-transparent px-4 text-3xl font-semibold text-fg outline-none placeholder:text-muted"
         />
         <textarea
           value={note.body}
@@ -57,7 +57,7 @@ export function NotesApp() {
   return (
     <Pane>
       <div className="flex items-center justify-between p-4">
-        <h2 className="font-display text-4xl">Notes</h2>
+        <h2 className="text-3xl font-semibold">Notes</h2>
         <button
           type="button"
           className={primaryClass}
@@ -78,7 +78,7 @@ export function NotesApp() {
               <button
                 type="button"
                 onClick={() => setActive(item.id)}
-                className="w-full rounded-shell border border-line bg-surface-2 px-4 py-3 text-left"
+                className="w-full rounded-2xl border border-line bg-surface-2 px-4 py-3 text-left"
               >
                 <span className="block truncate font-medium">{item.title || "Untitled"}</span>
                 <span className="mt-1 block truncate text-sm text-muted">{item.body || "Empty note"}</span>
@@ -104,7 +104,7 @@ export function TasksApp() {
   return (
     <Pane>
       <div className="p-4">
-        <h2 className="font-display text-4xl">Tasks</h2>
+        <h2 className="text-3xl font-semibold">Tasks</h2>
         <form
           className="mt-4 flex gap-2"
           onSubmit={(event) => {
@@ -130,7 +130,7 @@ export function TasksApp() {
         {tasks.length === 0 ? <p className="mt-6 text-sm text-muted">Nothing waiting.</p> : null}
         <ul className="mt-4 flex flex-col gap-2">
           {[...open, ...done].map((task) => (
-            <li key={task.id} className="flex items-center gap-2 rounded-shell border border-line bg-surface-2 px-2">
+            <li key={task.id} className="flex items-center gap-2 rounded-2xl border border-line bg-surface-2 px-2">
               <button
                 type="button"
                 className="grid size-11 place-items-center"
@@ -138,7 +138,7 @@ export function TasksApp() {
                 aria-label={task.done ? `Mark not done: ${task.text}` : `Mark done: ${task.text}`}
                 onClick={() => toggleTask(task.id)}
               >
-                <span className={`size-4 rounded-full border ${task.done ? "border-brass bg-brass" : "border-muted"}`} />
+                <span className={`size-4 rounded-full border ${task.done ? "border-accent bg-accent" : "border-muted"}`} />
               </button>
               <span className={`min-w-0 flex-1 truncate text-sm ${task.done ? "text-muted line-through" : ""}`}>
                 {task.text}
@@ -243,7 +243,7 @@ export function CalcApp() {
   return (
     <Pane>
       <div className="flex h-full flex-col p-4">
-        <p className="truncate text-right font-display text-5xl tabular-nums" aria-live="polite">
+        <p className="truncate text-right text-5xl font-semibold tabular-nums" aria-live="polite">
           {display}
         </p>
         <div className="mt-4 grid flex-1 grid-cols-4 gap-2">
@@ -254,7 +254,7 @@ export function CalcApp() {
               onClick={() => onKey(key)}
               className={`h-14 rounded-xl text-lg ${
                 key === "=" || key === "÷" || key === "×" || key === "−" || key === "+"
-                  ? "bg-brass text-brass-ink"
+                  ? "bg-accent text-accent-fg"
                   : "bg-surface-2 text-fg"
               } ${key === "0" ? "col-span-2" : ""}`}
             >
@@ -343,7 +343,7 @@ export function ClockApp() {
             type="button"
             aria-pressed={tab === id}
             onClick={() => setTab(id)}
-            className={`h-11 rounded-xl px-3 text-sm ${tab === id ? "bg-brass text-brass-ink" : "bg-surface-2 text-fg"}`}
+            className={`h-11 rounded-xl px-3 text-sm ${tab === id ? "bg-accent text-accent-fg" : "bg-surface-2 text-fg"}`}
           >
             {label}
           </button>
@@ -351,13 +351,13 @@ export function ClockApp() {
       </div>
       {tab === "time" ? (
         <div className="px-4 pb-8">
-          <p className="font-display text-6xl tabular-nums">{clock}</p>
+          <p className="text-6xl font-semibold tabular-nums">{clock}</p>
           <p className="mt-2 text-muted">{date}</p>
         </div>
       ) : null}
       {tab === "stop" ? (
         <div className="px-4 pb-8">
-          <p className="font-display text-6xl tabular-nums">{fmt(elapsed)}</p>
+          <p className="text-6xl font-semibold tabular-nums">{fmt(elapsed)}</p>
           <div className="mt-4 flex gap-2">
             <button type="button" className={primaryClass} onClick={() => setRunning((value) => !value)}>
               {running ? "Pause" : "Start"}
@@ -377,7 +377,7 @@ export function ClockApp() {
       ) : null}
       {tab === "timer" ? (
         <div className="px-4 pb-8">
-          <p className="font-display text-6xl tabular-nums">{fmt(left)}</p>
+          <p className="text-6xl font-semibold tabular-nums">{fmt(left)}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             {[1, 5, 15, 25].map((mins) => (
               <button
@@ -469,7 +469,7 @@ export function FilesApp() {
     <Pane>
       <div className="p-4">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="font-display text-4xl">Files</h2>
+          <h2 className="text-3xl font-semibold">Files</h2>
           <button type="button" className={quietClass} onClick={() => download("shell-copy.json", packShell())}>
             Export
           </button>
@@ -495,7 +495,7 @@ export function FilesApp() {
         {error ? <p className="mt-2 text-sm text-muted">{error}</p> : null}
         <ul className="mt-5 flex flex-col gap-2">
           {list.map((app) => (
-            <li key={app.id} className="rounded-shell border border-line bg-surface-2 p-3">
+            <li key={app.id} className="rounded-2xl border border-line bg-surface-2 p-3">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <p className="truncate font-medium">{app.name}</p>
@@ -572,7 +572,7 @@ export function SettingsApp() {
   return (
     <Pane>
       <div className="mx-auto max-w-xl p-4 pb-10">
-        <h2 className="font-display text-4xl">Settings</h2>
+        <h2 className="text-3xl font-semibold">Settings</h2>
         <p className="mt-2 text-sm text-pretty text-muted">
           Shell is a home screen for tools you describe. Builder writes them. You can still edit every line.
         </p>
@@ -609,7 +609,7 @@ export function SettingsApp() {
               type="button"
               aria-pressed={wallpaper === paper.id}
               onClick={() => setWallpaper(paper.id)}
-              className={`overflow-hidden rounded-shell border text-left ${wallpaper === paper.id ? "border-brass" : "border-line"}`}
+              className={`overflow-hidden rounded-2xl border text-left ${wallpaper === paper.id ? "border-accent ring-2 ring-accent" : "border-line"}`}
             >
               <span className="relative block h-16">
                 <span className="wallpaper" data-paper={paper.id} />
