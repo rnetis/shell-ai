@@ -1,3 +1,4 @@
+import { frameOwner, registerFrame } from "@/shell/frame-registry";
 import { useShell } from "@/shell/store";
 
 const CSP =
@@ -33,10 +34,46 @@ function bridge(appId: string) {
         parent.postMessage({ source: "shell-mini", type: "toast", appId: appId, message: String(message).slice(0, 140) }, "*");
       }
     };
+
+    // The frame is sandboxed without "allow-forms", and the browser refuses a
+    // real submission *before* it dispatches the submit event — so an app's
+    // onsubmit never runs, its input is dropped, and the console gets a
+    // "Blocked form submission" error. Stand in for the browser instead:
+    // swallow the native attempt, then hand the form a normal cancelable
+    // submit event that the app's handler can preventDefault as usual.
+    function dispatchSubmit(form, submitter){
+      var event;
+      try {
+        event = new SubmitEvent("submit", { bubbles: true, cancelable: true, submitter: submitter || null });
+      } catch (e) {
+        event = new Event("submit", { bubbles: true, cancelable: true });
+      }
+      form.dispatchEvent(event);
+    }
+    document.addEventListener("click", function(event){
+      if (event.defaultPrevented) return;
+      var target = event.target;
+      if (!target || !target.closest) return;
+      var control = target.closest("button, input[type=submit]");
+      if (!control || !control.form) return;
+      if (control.tagName === "BUTTON" && control.type !== "submit") return;
+      event.preventDefault();
+      dispatchSubmit(control.form, control);
+    });
+    document.addEventListener("keydown", function(event){
+      if (event.key !== "Enter" || event.defaultPrevented) return;
+      var target = event.target;
+      // Enter in a textarea is a newline, and Enter on a button already fires
+      // a click (handled above).
+      if (!target || !target.form || target.tagName === "TEXTAREA" || target.tagName === "BUTTON") return;
+      event.preventDefault();
+      var submitter = target.form.querySelector("button[type=submit], button:not([type])");
+      dispatchSubmit(target.form, submitter);
+    });
   })();`;
 }
 
-export function prepareHtml(html: string, appId: string) {
+function prepareHtml(html: string, appId: string) {
   const inject = `${CSP}<script>${bridge(appId).replace(/<\/script/gi, "<\\/script")}</script>`;
   if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, (match) => match + inject);
   return `<!DOCTYPE html><html><head>${inject}</head><body>${html}</body></html>`;
@@ -44,7 +81,7 @@ export function prepareHtml(html: string, appId: string) {
 
 let listening = false;
 
-export function ensureMiniBridge() {
+function ensureMiniBridge() {
   if (listening || typeof window === "undefined") return;
   listening = true;
   window.addEventListener("message", (event) => {
@@ -58,11 +95,15 @@ export function ensureMiniBridge() {
       message?: string;
     };
     if (!data || data.source !== "shell-mini" || !data.appId) return;
+    // srcdoc frames all share the origin "null", so the app id in the message
+    // proves nothing on its own — only the registered frame may speak for it.
+    if (frameOwner(event.source) !== data.appId) return;
+    const source = event.source as Window;
     if (data.type === "toast") {
       useShell.getState().pushToast(String(data.message ?? "Done"));
       return;
     }
-    if (data.type !== "rpc" || !event.source) return;
+    if (data.type !== "rpc") return;
     const appId = data.appId;
     const bag = { ...(useShell.getState().miniData[appId] ?? {}) };
     const key = String(data.payload?.k ?? "").slice(0, 64);
@@ -72,7 +113,7 @@ export function ensureMiniBridge() {
       bag[key] = String(data.payload?.v ?? "").slice(0, 100_000);
       useShell.getState().setMiniBag(appId, bag);
     }
-    (event.source as Window).postMessage({ type: "rpc-result", id: data.id, appId, result }, "*");
+    source.postMessage({ type: "rpc-result", id: data.id, appId, result }, "*");
   });
 }
 
@@ -92,6 +133,7 @@ export function MiniFrame({
       title={title}
       sandbox="allow-scripts"
       srcDoc={doc}
+      ref={(node) => registerFrame(node?.contentWindow, appId)}
       className="h-full w-full border-0 bg-surface-2"
     />
   );

@@ -43,6 +43,27 @@ function useNow() {
   return now;
 }
 
+/**
+ * The only thing on screen that changes every second. Keeping the tick inside
+ * its own component means a running clock no longer re-renders the whole home
+ * screen — every window, icon and open app — sixty times a minute.
+ */
+function Clock({ className }: { className?: string }) {
+  const now = useNow();
+  const time = now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  return (
+    <time className={className} aria-live="off">
+      {time}
+    </time>
+  );
+}
+
+function TodayLine() {
+  const now = useNow();
+  const date = now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
+  return <p className="font-display text-4xl text-paper-fg text-balance">{date}</p>;
+}
+
 function AppSurface({ id }: { id: string }) {
   const mini = useShell((s) => s.minis[id]);
   if (id === "builder") return <Builder />;
@@ -104,11 +125,9 @@ function Desktop() {
   const windows = useShell((s) => s.windows);
   const coach = useShell((s) => s.coach);
   const setSwitcher = useShell((s) => s.setSwitcher);
-  const now = useNow();
   const minis = useShell((s) => s.minis);
   const focused = [...windows].sort((a, b) => b.z - a.z).find((win) => !win.minimized);
   const title = focused ? describeApp(focused.appId, minis).name : "Home";
-  const time = now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
   return (
     <div className="relative h-full">
@@ -123,7 +142,7 @@ function Desktop() {
           <button type="button" className={iconBtnClass} aria-label="Open apps" onClick={() => setSwitcher(true)}>
             <AppWindow className="size-5" />
           </button>
-          <time className="px-3 text-sm tabular-nums">{time}</time>
+          <Clock className="px-3 text-sm tabular-nums" />
         </div>
       </header>
       <div className="absolute inset-x-0 top-12 bottom-24 overflow-hidden px-3 py-4">
@@ -162,7 +181,15 @@ function Window({ win }: { win: Win }) {
     const startX = win.x;
     const startY = win.y;
     function move(next: PointerEvent) {
-      moveWindow(win.id, Math.max(8, startX + next.clientX - originX), Math.max(52, startY + next.clientY - originY));
+      // Keep the title bar on screen: a window dragged past the edge is
+      // unreachable — no way to focus it, no way back.
+      const maxX = Math.max(8, window.innerWidth - 80);
+      const maxY = Math.max(52, window.innerHeight - 44);
+      moveWindow(
+        win.id,
+        Math.min(maxX, Math.max(8, startX + next.clientX - originX)),
+        Math.min(maxY, Math.max(52, startY + next.clientY - originY)),
+      );
     }
     function up() {
       window.removeEventListener("pointermove", move);
@@ -179,7 +206,13 @@ function Window({ win }: { win: Win }) {
     const startW = win.w;
     const startH = win.h;
     function move(next: PointerEvent) {
-      resizeWindow(win.id, startW + next.clientX - originX, startH + next.clientY - originY);
+      const maxW = Math.max(320, window.innerWidth - win.x - 8);
+      const maxH = Math.max(280, window.innerHeight - win.y - 8);
+      resizeWindow(
+        win.id,
+        Math.min(maxW, Math.max(320, startW + next.clientX - originX)),
+        Math.min(maxH, Math.max(280, startH + next.clientY - originY)),
+      );
     }
     function up() {
       window.removeEventListener("pointermove", move);
@@ -248,14 +281,11 @@ function PhoneHome() {
   const arrange = useShell((s) => s.arrange);
   const setArrange = useShell((s) => s.setArrange);
   const coach = useShell((s) => s.coach);
-  const now = useNow();
-  const time = now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-  const date = now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
 
   return (
     <div className="relative flex h-full flex-col pt-[env(safe-area-inset-top)]">
       <header className="flex h-12 items-center justify-between px-2 text-paper-fg">
-        <time className="px-2 text-sm tabular-nums">{time}</time>
+        <Clock className="px-2 text-sm tabular-nums" />
         <div className="flex items-center">
           <button type="button" className="h-11 px-3 text-sm" aria-pressed={arrange} onClick={() => setArrange(!arrange)}>
             {arrange ? "Done" : "Arrange"}
@@ -264,7 +294,7 @@ function PhoneHome() {
         </div>
       </header>
       <div className="px-5 pt-1">
-        <p className="font-display text-4xl text-paper-fg text-balance">{date}</p>
+        <TodayLine />
       </div>
       {coach ? (
         <div className="px-4 pt-4">
@@ -446,13 +476,15 @@ function Confirm() {
   if (!dialog) return null;
   return (
     <div className="absolute inset-0 z-50 grid place-items-center bg-bg/55 p-4">
-      <div className="w-full max-w-sm rounded-shell border border-line bg-surface p-5 shadow-window" role="alertdialog" aria-labelledby="confirm-title">
+      <div className="w-full max-w-sm rounded-shell border border-line bg-surface p-5 shadow-window" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-body">
         <h2 id="confirm-title" className="font-display text-3xl">
           {dialog.title}
         </h2>
-        <p className="mt-2 text-sm text-pretty text-muted">{dialog.body}</p>
+        <p id="confirm-body" className="mt-2 text-sm text-pretty text-muted">
+          {dialog.body}
+        </p>
         <div className="mt-5 flex justify-end gap-2">
-          <button type="button" className={quietClass} onClick={() => settleConfirm(false)}>
+          <button type="button" className={quietClass} autoFocus onClick={() => settleConfirm(false)}>
             Cancel
           </button>
           <button type="button" className={primaryClass} onClick={() => settleConfirm(true)}>

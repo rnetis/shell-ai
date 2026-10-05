@@ -1,6 +1,55 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestIP } from "@tanstack/react-start/server";
+import { createRateLimiter } from "@/shell/agent/rate-limit";
 
 type Mode = "ask" | "edit" | "auto";
+
+/** Bytes `importRemote` will buffer before it gives up on a file. */
+const IMPORT_MAX_BYTES = 600_000;
+
+/**
+ * Who is asking, for the purpose of a per-caller ceiling on Grok spend.
+ * Everything about this is best-effort: an unknown caller falls back to a
+ * shared bucket rather than an error, and a header we cannot trust is still
+ * better than no ceiling at all.
+ */
+function callerKey(): string {
+  try {
+    const ip = getRequestIP({ xForwardedFor: true });
+    if (ip) return ip.slice(0, 64);
+  } catch {
+    // No request in scope (prerender, a direct function call) — shared bucket.
+  }
+  return "unknown";
+}
+
+const composeBudget = createRateLimiter({ limit: 15, windowMs: 60_000 });
+const importBudget = createRateLimiter({ limit: 30, windowMs: 60_000 });
+
+/** Read a response body, refusing to buffer more than `maxBytes`. */
+async function readCapped(res: Response, maxBytes: number): Promise<string> {
+  if (!res.body) return "";
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel().catch(() => undefined);
+      throw new Error("That file is too large.");
+    }
+    chunks.push(value);
+  }
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(merged);
+}
 
 const SYSTEM = `You write mini apps for Shell, a pocket desk.
 Follow the mode exactly.
@@ -45,6 +94,13 @@ export const composeWithGrok = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const apiKey = process.env.XAI_API_KEY;
     if (!apiKey) return { ok: false as const, reason: "unavailable" as const, error: "Grok is off" };
+    if (!composeBudget.allow(callerKey())) {
+      return {
+        ok: false as const,
+        reason: "rate" as const,
+        error: "Grok is busy — give it a minute.",
+      };
+    }
 
     const user =
       data.mode === "ask"
@@ -110,6 +166,9 @@ export const importRemote = createServerFn({ method: "POST" })
     return { url: parsed.toString() };
   })
   .handler(async ({ data }) => {
+    if (!importBudget.allow(callerKey())) {
+      throw new Error("Too many imports just now — wait a moment.");
+    }
     let target = data.url;
     const parsed = new URL(target);
     if (parsed.hostname === "github.com") {
@@ -117,12 +176,15 @@ export const importRemote = createServerFn({ method: "POST" })
       if (!match) throw new Error("Use a link to a file, not a repository.");
       target = `https://raw.githubusercontent.com/${match[1]}/${match[2]}/${match[3]}/${match[4]}`;
     }
-    const res = await fetch(target, { redirect: "manual" });
+    const res = await fetch(target, {
+      redirect: "manual",
+      signal: AbortSignal.timeout(15_000),
+    });
     if (res.status >= 300 && res.status < 400) {
       throw new Error("That link redirects. Open the raw file and paste that.");
     }
     if (!res.ok) throw new Error(`Could not fetch that file (${res.status}).`);
-    const text = await res.text();
+    const text = await readCapped(res, IMPORT_MAX_BYTES);
     if (text.length > 200_000) throw new Error("That file is too large.");
     return { ok: true as const, text };
   });

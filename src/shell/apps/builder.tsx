@@ -181,6 +181,19 @@ function Studio({
   const snaps = useShell((s) => s.snapshots.filter((snap) => snap.appId === draft.appId).length);
   const previewHtml = draft.pending || draft.html;
   const endRef = useRef<HTMLDivElement>(null);
+  const hadHtml = useRef(draft.html !== "");
+
+  // The lobby starts a build before this pane exists, so the first draft lands
+  // here with nothing on screen but chat. Show what was just built — the same
+  // jump `send()` makes for every later prompt.
+  useEffect(() => {
+    const hasHtml = draft.html !== "";
+    const firstDraft = hasHtml && !hadHtml.current;
+    hadHtml.current = hasHtml;
+    if (!firstDraft) return;
+    const ownerSpoke = draft.messages.some((message) => message.role === "user");
+    if (ownerSpoke && !wide && mode !== "ask") setTab("preview");
+  }, [draft.html, draft.messages, mode, wide]);
 
   useEffect(() => {
     const node = rootRef.current;

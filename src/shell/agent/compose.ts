@@ -53,7 +53,11 @@ export async function compose(input: {
     });
     if (!remote.ok) {
       const fallback = local();
-      return remote.reason === "unavailable" ? fallback : { ...fallback, note: remote.error };
+      if (remote.reason === "unavailable") return fallback;
+      if (remote.reason === "rate") {
+        return { ...fallback, note: "Grok is at its limit for a moment, so Studio wrote this one." };
+      }
+      return { ...fallback, note: remote.error };
     }
     if (remote.kind === "ask") {
       const named = compileOffline({ prompt: input.prompt, mode: "ask", keepName: input.keepName });

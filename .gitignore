@@ -5,7 +5,12 @@ dist
 www
 ios
 android
-.grok
+# Machine-local client metadata (its own UUID, mode 600).
+.freebuff/
+# Everything the platform generates per workspace — except the build flag the
+# env wrapper, CI and `npm test` all expect the checkout to ship.
+.grok/*
+!.grok/app-env.json
 screenshots
 artifacts
 *.log

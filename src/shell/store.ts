@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { compileOffline } from "@/shell/agent/compile";
+import { sanitizeShellState } from "@/shell/sanitize";
+import { createShellStorage } from "@/shell/storage";
 import type {
   BuilderMode,
   DialogState,
@@ -39,15 +41,21 @@ function sampleMini(): MiniApp {
   };
 }
 
-const memory = {
-  getItem: (name: string) => (typeof window === "undefined" ? null : localStorage.getItem(name)),
-  setItem: (name: string, value: string) => {
-    if (typeof window !== "undefined") localStorage.setItem(name, value);
+// Writes are debounced and quota-safe: the desk is serialized on every state
+// change, and a browser that refuses the write (full disk, blocked storage)
+// must not take the running app down with it.
+let storageWarned = false;
+const storage = createShellStorage({
+  onWriteError: () => {
+    if (storageWarned) return;
+    storageWarned = true;
+    queueMicrotask(() => {
+      useShell
+        .getState()
+        .pushToast("This device could not save — export a copy from Files.");
+    });
   },
-  removeItem: (name: string) => {
-    if (typeof window !== "undefined") localStorage.removeItem(name);
-  },
-};
+});
 
 export type ShellState = {
   theme: ThemeChoice;
@@ -113,6 +121,9 @@ export type ShellState = {
 let dialogResolve: ((ok: boolean) => void) | null = null;
 
 export function askConfirm(dialog: DialogState) {
+  // A second prompt raised while one is open would otherwise orphan the first
+  // promise: it could never settle, and its caller would await forever.
+  if (dialogResolve) settleConfirm(false);
   useShell.setState({ dialog });
   return new Promise<boolean>((resolve) => {
     dialogResolve = resolve;
@@ -458,7 +469,14 @@ export const useShell = create<ShellState>()(
     }),
     {
       name: "shell-os-v1",
-      storage: createJSONStorage(() => memory),
+      storage: createJSONStorage(() => storage),
+      // Zustand calls `merge` even when storage was empty (with `undefined`),
+      // and replaces the whole state with the result — so keep the live state
+      // untouched there, and route anything else through the rehydration guard.
+      merge: (persisted, current) =>
+        persisted === undefined || persisted === null
+          ? current
+          : { ...current, ...sanitizeShellState(persisted, SYSTEM_IDS) },
       partialize: (state) => ({
         theme: state.theme,
         wallpaper: state.wallpaper,
@@ -476,3 +494,13 @@ export const useShell = create<ShellState>()(
     },
   ),
 );
+
+// A debounced write has to land before the tab goes away, or the last quarter
+// second of typing is lost on close.
+if (typeof window !== "undefined") {
+  const flush = () => storage.flush();
+  window.addEventListener("pagehide", flush);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") flush();
+  });
+}

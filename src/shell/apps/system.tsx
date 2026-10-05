@@ -306,19 +306,18 @@ export function ClockApp() {
 
   useEffect(() => {
     if (!timing) return;
-    const id = window.setInterval(() => {
-      setLeft((value) => {
-        if (value <= 1) {
-          setTiming(false);
-          pushToast("Timer finished");
-          beep();
-          return 0;
-        }
-        return value - 1;
-      });
-    }, 1000);
+    const id = window.setInterval(() => setLeft((value) => Math.max(0, value - 1)), 1000);
     return () => window.clearInterval(id);
-  }, [timing, pushToast]);
+  }, [timing]);
+
+  // React may run a state updater more than once, so the finished bell belongs
+  // in an effect: firing it from inside `setLeft` would ring twice.
+  useEffect(() => {
+    if (!timing || left > 0) return;
+    setTiming(false);
+    pushToast("Timer finished");
+    beep();
+  }, [left, timing, pushToast]);
 
   const clock = now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
   const date = now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
@@ -413,7 +412,7 @@ function download(filename: string, text: string) {
   URL.revokeObjectURL(url);
 }
 
-export function packShell() {
+function packShell() {
   const state = useShell.getState();
   return JSON.stringify(
     {
@@ -635,7 +634,14 @@ export function SettingsApp() {
                 const file = event.target.files?.[0];
                 event.target.value = "";
                 if (!file) return;
+                // A restore is parsed whole into memory: refuse the obvious
+                // mistake of picking something that is not a Shell copy.
+                if (file.size > 5_000_000) {
+                  setError("That file is too large to be a Shell copy.");
+                  return;
+                }
                 const reader = new FileReader();
+                reader.onerror = () => setError("Could not read that file");
                 reader.onload = () => {
                   try {
                     const count = importPack(String(reader.result ?? ""));
