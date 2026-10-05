@@ -1,0 +1,12 @@
+node_modules
+.output
+.vercel
+dist
+www
+ios
+android
+.grok
+screenshots
+artifacts
+*.log
+.DS_Store

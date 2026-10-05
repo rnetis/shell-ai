@@ -1,0 +1,9 @@
+{
+  "appId": "app.shell.pocket",
+  "appName": "Shell",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "automatic",
+    "limitsNavigationsToAppBoundDomains": false
+  }
+}

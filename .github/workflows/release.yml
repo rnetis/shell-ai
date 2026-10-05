@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Pack the web build
+        run: |
+          mkdir -p release
+          if [ -d .vercel/output ]; then tar -czf release/shell-web.tar.gz .vercel/output
+          elif [ -d .output ]; then tar -czf release/shell-web.tar.gz .output
+          else echo "No build output to pack" && exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shell-web
+          path: release/shell-web.tar.gz
+
+  ios-unsigned:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Snapshot the client into www
+        run: |
+          npm run preview > /tmp/shell-preview.log 2>&1 &
+          echo $! > /tmp/shell-preview.pid
+          ok=0
+          for _ in $(seq 1 90); do
+            if curl -sf -o /dev/null http://127.0.0.1:8081/; then ok=1; break; fi
+            sleep 1
+          done
+          if [ "$ok" != 1 ]; then
+            echo "Preview never came up"
+            cat /tmp/shell-preview.log || true
+            exit 1
+          fi
+          node scripts/package-www.mjs
+          kill "$(cat /tmp/shell-preview.pid)" || true
+      - name: Build unsigned IPA
+        run: sh scripts/build-unsigned-ipa.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shell-unsigned-ipa
+          path: release/Shell-unsigned.ipa
+
+  publish:
+    needs: [web, ios-unsigned]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release
+          merge-multiple: true
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --notes "Shell web build and an unsigned iOS IPA. The IPA will not install on a stock iPhone until AltStore, Sideloadly, or another sideload tool re-signs it. Inside the IPA, Builder uses the on-device Studio writer; Grok is available in the hosted web app." \
+            release/*
