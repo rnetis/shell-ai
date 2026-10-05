@@ -71,6 +71,10 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
+      # `gh release create` resolves the repository through git, so the job
+      # needs the checkout — without it the release step fails on "not a git
+      # repository" after both artifacts have already been built.
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           path: release
