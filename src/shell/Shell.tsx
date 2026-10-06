@@ -1,9 +1,9 @@
-import { AppWindow, House, Minus, Square, X } from "lucide-react";
+import { AppWindow, ArrowUpRight, ChevronLeft, ChevronRight, House, Minus, Plus, Sparkles, Square, X } from "lucide-react";
 import { useEffect, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { Builder } from "@/shell/apps/builder";
 import { CalcApp, ClockApp, FilesApp, NotesApp, SettingsApp, TasksApp } from "@/shell/apps/system";
-import { Coach, Dock, LaunchIcon, SearchButton, Wallpaper } from "@/shell/chrome";
-import { describeApp } from "@/shell/icons";
+import { Coach, Dock, SearchButton, Wallpaper } from "@/shell/chrome";
+import { describeApp, ICONS } from "@/shell/icons";
 import { MiniFrame } from "@/shell/runtime";
 import { settleConfirm, useShell } from "@/shell/store";
 import type { ThemeChoice, Win } from "@/shell/types";
@@ -61,7 +61,7 @@ function Clock({ className }: { className?: string }) {
 function TodayLine() {
   const now = useNow();
   const date = now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
-  return <p className="text-3xl font-semibold text-paper-fg text-balance">{date}</p>;
+  return <p className="shell-date">{date}</p>;
 }
 
 function AppSurface({ id }: { id: string }) {
@@ -75,6 +75,48 @@ function AppSurface({ id }: { id: string }) {
   if (id === "settings") return <SettingsApp />;
   if (!mini) return <p className="p-4 text-sm text-muted">This app is gone.</p>;
   return <MiniFrame appId={id} html={mini.html} title={mini.name} />;
+}
+
+const APP_DESCRIPTIONS: Record<string, string> = {
+  builder: "Turn an idea into a tool",
+  notes: "Thoughts worth keeping",
+  tasks: "Keep your day moving",
+  calc: "Quick calculations",
+  clock: "Time and focus",
+  files: "Copies and imports",
+  settings: "Make this space yours",
+};
+
+function AppCard({ id, compact = false, arrange = false }: { id: string; compact?: boolean; arrange?: boolean }) {
+  const minis = useShell((s) => s.minis);
+  const openApp = useShell((s) => s.openApp);
+  const nudge = useShell((s) => s.nudge);
+  const running = useShell((s) => s.windows.some((win) => win.appId === id && !win.minimized));
+  const meta = describeApp(id, minis);
+  const Icon = ICONS[meta.icon];
+
+  return (
+    <article className={`app-card group ${compact ? "app-card-compact" : ""}`}>
+      <button type="button" className="app-card-main" aria-label={arrange ? `${meta.name} is in arrange mode` : `Open ${meta.name}`} onClick={() => { if (!arrange) openApp(id); }}>
+        <span className="app-card-icon" data-app={meta.icon}>
+          <Icon className={compact ? "size-5" : "size-6"} strokeWidth={1.8} />
+        </span>
+        <span className="app-card-copy">
+          <span className="app-card-title">{meta.name}</span>
+          <span className="app-card-description">{APP_DESCRIPTIONS[id] ?? "A tool made on this desk"}</span>
+        </span>
+        <span className="app-card-trailing">
+          {!arrange && (running ? <span className="app-running">Open</span> : <ArrowUpRight className="size-4" />)}
+        </span>
+      </button>
+      {arrange ? (
+        <div className="app-card-reorder">
+          <button type="button" aria-label={`Move ${meta.name} earlier`} onClick={() => nudge(id, -1)}><ChevronLeft className="size-4" /></button>
+          <button type="button" aria-label={`Move ${meta.name} later`} onClick={() => nudge(id, 1)}><ChevronRight className="size-4" /></button>
+        </div>
+      ) : null}
+    </article>
+  );
 }
 
 export function ShellApp() {
@@ -131,32 +173,53 @@ function Desktop() {
 
   return (
     <div className="relative h-full">
-      <header className="absolute inset-x-0 top-0 z-30 flex h-12 items-center gap-2 border-b border-line bg-dock px-2 backdrop-blur-xl">
-        <span className="px-2 font-semibold text-xl">Shell</span>
-        <span className="truncate text-sm text-muted">{title}</span>
-        <div className="ml-auto flex items-center">
+      <header className="shell-menubar">
+        <div className="shell-brand">
+          <span className="shell-brand-mark"><Sparkles className="size-4" /></span>
+          <span className="shell-brand-name">Shell</span>
+          <span className="shell-brand-divider" />
+          <span className="shell-active-app">{title}</span>
+        </div>
+        <div className="shell-menubar-actions">
           <SearchButton />
-          <button type="button" className="h-11 px-3 text-sm text-fg font-medium" aria-pressed={arrange} onClick={() => setArrange(!arrange)}>
-            {arrange ? "Done" : "Arrange"}
+          <button type="button" className="shell-tool-button" aria-pressed={arrange} onClick={() => setArrange(!arrange)}>
+            <Plus className="size-4" /> {arrange ? "Done arranging" : "Arrange apps"}
           </button>
-          <button type="button" className={iconBtnClass} aria-label="Open apps" onClick={() => setSwitcher(true)}>
-            <AppWindow className="size-5" />
+          <button type="button" className="shell-tool-icon" aria-label="Open apps" onClick={() => setSwitcher(true)}>
+            <AppWindow className="size-[18px]" />
           </button>
-          <Clock className="px-3 text-sm font-medium tabular-nums" />
+          <Clock className="shell-clock" />
         </div>
       </header>
-      <div className="absolute inset-x-0 top-12 bottom-24 overflow-hidden px-3 py-4">
-        <div className="flex h-full flex-col flex-wrap content-start gap-x-1 gap-y-4">
-          {order.map((id) => (
-            <LaunchIcon key={id} id={id} arrange={arrange} />
-          ))}
+      <main className="shell-home-scroll">
+        <div className="shell-home-content">
+          <div className="shell-home-heading">
+            <div>
+              <p className="shell-eyebrow">A little space for your ideas</p>
+              <h1>Your desk</h1>
+              <TodayLine />
+            </div>
+            <div className="shell-local-badge"><span /> Your apps stay on this device</div>
+          </div>
+          {coach ? <Coach className="shell-welcome-card" /> : null}
+          <section className="shell-app-library" aria-label="Your apps">
+            <div className="shell-section-heading">
+              <div>
+                <h2>Your apps</h2>
+                <p>Open a tool or make one of your own.</p>
+              </div>
+              <span>{order.length} {order.length === 1 ? "app" : "apps"}</span>
+            </div>
+            <div className="shell-app-grid">
+              {order.map((id) => <AppCard key={id} id={id} arrange={arrange} />)}
+            </div>
+          </section>
         </div>
-      </div>
+      </main>
       {windows.map((win) => (
         <Window key={win.id} win={win} />
       ))}
       <Dock />
-      {coach ? <Coach className="absolute top-20 right-8 z-20" /> : null}
     </div>
   );
 }
@@ -284,29 +347,39 @@ function PhoneHome() {
 
   return (
     <div className="relative flex h-full flex-col pt-[env(safe-area-inset-top)]">
-      <header className="flex h-12 items-center justify-between px-2 text-paper-fg font-medium">
-        <Clock className="px-2 text-sm tabular-nums" />
+      <header className="phone-menubar">
+        <div className="shell-brand">
+          <span className="shell-brand-mark"><Sparkles className="size-4" /></span>
+          <span className="shell-brand-name">Shell</span>
+        </div>
+        <Clock className="shell-clock" />
         <div className="flex items-center">
-          <button type="button" className="h-11 px-3 text-sm font-medium" aria-pressed={arrange} onClick={() => setArrange(!arrange)}>
+          <button type="button" className="shell-tool-button shell-tool-button-mobile" aria-pressed={arrange} onClick={() => setArrange(!arrange)}>
             {arrange ? "Done" : "Arrange"}
           </button>
           <SearchButton />
         </div>
       </header>
-      <div className="px-5 pt-1">
-        <TodayLine />
-      </div>
+      <div className="phone-home-scroll">
+        <div className="phone-home-heading">
+          <p className="shell-eyebrow">A little space for your ideas</p>
+          <h1>Your desk</h1>
+          <TodayLine />
+        </div>
       {coach ? (
-        <div className="px-4 pt-4">
-          <Coach />
+        <div className="px-4 pt-5">
+          <Coach className="shell-welcome-card" />
         </div>
       ) : null}
-      <div className="min-h-0 flex-1 overflow-auto px-2 pb-28 pt-6">
-        <div className="grid grid-cols-4 justify-items-center gap-y-5">
-          {order.map((id) => (
-            <LaunchIcon key={id} id={id} arrange={arrange} />
-          ))}
+      <section className="phone-app-library" aria-label="Your apps">
+        <div className="shell-section-heading">
+          <div><h2>Your apps</h2><p>Ready when you are.</p></div>
+          <span>{order.length}</span>
         </div>
+        <div className="phone-app-grid">
+          {order.map((id) => <AppCard key={id} id={id} compact arrange={arrange} />)}
+        </div>
+      </section>
       </div>
       <Dock />
     </div>

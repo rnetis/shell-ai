@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Search, Sparkles, X } from "lucide-react";
 import { describeApp, ICONS } from "@/shell/icons";
 import { useShell } from "@/shell/store";
 
@@ -103,25 +103,26 @@ export function Coach({ className = "" }: { className?: string }) {
   const dismiss = useShell((s) => s.dismissCoach);
   const openApp = useShell((s) => s.openApp);
   return (
-    <aside className={`max-w-sm rounded-3xl border border-line bg-surface p-5 text-fg shadow-window ${className}`}>
-      <p className="text-xl font-semibold">Make something small.</p>
-      <p className="mt-2 text-sm text-pretty text-muted">
-        Open Builder, describe a tool, and pin it here. Reading week is already waiting.
-      </p>
-      <div className="mt-4 flex gap-2">
-        <button
-          type="button"
-          className="inline-flex h-10 items-center rounded-lg bg-accent px-4 text-sm font-medium text-accent-fg"
-          onClick={() => {
-            dismiss();
-            openApp("builder");
-          }}
-        >
-          Open Builder
-        </button>
-        <button type="button" className="h-10 px-3 text-sm font-medium text-muted" onClick={dismiss}>
-          Not now
-        </button>
+    <aside className={`shell-welcome-card-inner ${className}`}>
+      <div className="welcome-copy">
+        <p className="welcome-kicker"><Sparkles className="size-3.5" /> A DESK THAT GROWS WITH YOU</p>
+        <h2>Make a little app for a thing you do every day.</h2>
+        <p>Describe it in a sentence. Shell builds it, and keeps it right here on your desk.</p>
+        <div className="welcome-actions">
+          <button type="button" className="welcome-primary" onClick={() => { dismiss(); openApp("builder"); }}>
+            Create an app <ArrowRight className="size-4" />
+          </button>
+          <button type="button" className="welcome-dismiss" onClick={dismiss} aria-label="Dismiss welcome">
+            <X className="size-4" />
+          </button>
+        </div>
+      </div>
+      <div className="welcome-art" aria-hidden="true">
+        <span className="welcome-orbit welcome-orbit-one" />
+        <span className="welcome-orbit welcome-orbit-two" />
+        <span className="welcome-glass"><Sparkles className="size-8" /></span>
+        <span className="welcome-star welcome-star-one">✳</span>
+        <span className="welcome-star welcome-star-two">✦</span>
       </div>
     </aside>
   );
